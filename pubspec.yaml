@@ -1,10 +1,12 @@
-name: json_schema_to_freezed
-description: Convert JSON schema files to Dart classes with Freezed or regular Dart classes with JSON serialization support.
-version: 1.0.1
-repository: https://github.com/jpedrosouza/json_schema_to_freezed
-homepage: https://github.com/jpedrosouza/json_schema_to_freezed
-documentation: https://github.com/jpedrosouza/json_schema_to_freezed/blob/main/README.md
-issue_tracker: https://github.com/jpedrosouza/json_schema_to_freezed/issues
+name: json_schema_to_freezed_openvn
+description: An OpenVN-specific custom fork of json_schema_to_freezed - Convert JSON schema files to Dart classes with Freezed or regular Dart classes with JSON serialization support.
+version: 0.1.0
+
+publish_to: "none" # Remove this line if you want to publish to pub.dev
+repository: https://github.com/Stefan4D/json_schema_to_freezed_openvn
+homepage: https://github.com/Stefan4D/json_schema_to_freezed_openvn
+documentation: https://github.com/Stefan4D/json_schema_to_freezed_openvn/blob/main/README.md
+issue_tracker: https://github.com/Stefan4D/json_schema_to_freezed_openvn/issues
 
 environment:
   sdk: ^3.7.2
