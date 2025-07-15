@@ -203,6 +203,23 @@ class JsonSchemaToFreezed {
         }
 
         buffer.writeln("import 'dart:convert';");
+
+        for (final model in schema.models) {
+          // Add imports for reference fields
+          final referenceFields = model.fields.where(
+            (f) => f.type.kind == TypeKind.reference,
+          );
+          if (referenceFields.isNotEmpty) {
+            buffer.writeln();
+            for (final field in referenceFields) {
+              final referenceFileName = _getFileName(field.type.reference!);
+              buffer.writeln(
+                "import '../$referenceFileName/$referenceFileName.dart';",
+              );
+            }
+          }
+        }
+
         buffer.writeln();
 
         final fileName = path.basenameWithoutExtension(outputPath);
