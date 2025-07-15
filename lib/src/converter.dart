@@ -25,11 +25,13 @@ class JsonSchemaToFreezed {
   Future<bool> convertFromUrl(String url, String outputPath) async {
     try {
       final response = await http.get(Uri.parse(url), headers: headers);
-      
+
       if (response.statusCode != 200) {
-        throw Exception('Failed to retrieve schema. Status: ${response.statusCode}');
+        throw Exception(
+          'Failed to retrieve schema. Status: ${response.statusCode}',
+        );
       }
-      
+
       final jsonData = json.decode(response.body);
       return _processSchemaData(jsonData, outputPath);
     } catch (e) {
@@ -45,10 +47,10 @@ class JsonSchemaToFreezed {
       if (!await file.exists()) {
         throw Exception('File not found: $filePath');
       }
-      
+
       final content = await file.readAsString();
       final extension = path.extension(filePath).toLowerCase();
-      
+
       if (extension == '.json') {
         final jsonData = json.decode(content);
         return _processSchemaData(jsonData, outputPath);
@@ -61,20 +63,21 @@ class JsonSchemaToFreezed {
     }
   }
 
-Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
+  Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
     final parser = JsonSchemaParser();
     final schema = await parser.parse(jsonData);
-    
+
     // Transform model names to use AdapterParams instead of Params
     for (var model in schema.models) {
       if (model.name.endsWith('Params')) {
-        model.name = '${model.name.substring(0, model.name.length - 'Params'.length)}AdapterParams';
+        model.name =
+            '${model.name.substring(0, model.name.length - 'Params'.length)}AdapterParams';
       }
     }
-    
+
     // Check if user requested separate files
     final generateSeparateFiles = outputPath.contains("*");
-    
+
     if (generateSeparateFiles) {
       return _generateSeparateFiles(schema, outputPath);
     } else {
@@ -82,68 +85,97 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
     }
   }
 
-  Future<bool> _generateSeparateFiles(Schema schema, String outputPathTemplate) async {
+  Future<bool> _generateSeparateFiles(
+    Schema schema,
+    String outputPathTemplate,
+  ) async {
     try {
       bool allSuccess = true;
-      final directory = Directory(path.dirname(outputPathTemplate.replaceAll("*", "")));
+      final directory = Directory(
+        path.dirname(outputPathTemplate.replaceAll("*", "")),
+      );
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
-      
+
       for (final model in schema.models) {
-        // Get the file name in snake_case
-        String fileName = ReCase(model.name).snakeCase;
-        
-        // Replace "adapter_params" with "adapter_params" in the file name for consistency
-        if (fileName.endsWith('_adapter_params')) {
-          fileName = '${fileName.substring(0, fileName.length - '_adapter_params'.length)}_adapter';
-        } else if (fileName.endsWith('_params')) {
-            // Maintain compatibility with existing code that may still use _params
-          fileName = '${fileName.substring(0, fileName.length - '_params'.length)}_adapter';
-        }
-        
-        // Generate the file path without adding "generated_" as a prefix
+        final fileName = _getFileName(model.name);
+
         final outputPath = outputPathTemplate.replaceAll("*", fileName);
-        
+
         final output = File(outputPath);
         final buffer = StringBuffer();
-        
+
         // Add necessary imports
         if (freezed) {
           buffer.writeln("// GENERATED CODE - DO NOT MODIFY MANUALLY");
-          buffer.writeln("// Generated on: ${DateTime.now().toIso8601String()}");
+          buffer.writeln(
+            "// Generated on: ${DateTime.now().toIso8601String()}",
+          );
           buffer.writeln();
-          buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
-          
+          buffer.writeln(
+            "import 'package:freezed_annotation/freezed_annotation.dart';",
+          );
+
           if (jsonSerializable) {
-            buffer.writeln("import 'package:json_annotation/json_annotation.dart';");
+            buffer.writeln(
+              "import 'package:json_annotation/json_annotation.dart';",
+            );
           }
-          
+
           buffer.writeln("import 'dart:convert';");
+
+          final referenceFields = model.fields.where(
+            (f) => f.type.kind == TypeKind.reference,
+          );
+          if (referenceFields.isNotEmpty) {
+            buffer.writeln();
+            for (final field in referenceFields) {
+              final referenceFileName = _getFileName(field.type.reference!);
+              buffer.writeln(
+                "import '../$referenceFileName/$referenceFileName.dart';",
+              );
+            }
+          }
+
           buffer.writeln();
-          
+
           final fileNameBase = path.basenameWithoutExtension(outputPath);
           buffer.writeln("part '$fileNameBase.freezed.dart';");
-          
+
           if (jsonSerializable) {
             buffer.writeln("part '$fileNameBase.g.dart';");
           }
-          
+
           buffer.writeln();
         }
-        
+
         // Generate class for this model
         _generateModelClass(buffer, model);
-        
+
         await output.writeAsString(buffer.toString());
         print('✅ Class generated: ${model.name} -> $outputPath');
       }
-      
+
       return allSuccess;
     } catch (e) {
       print('Error generating Dart classes: $e');
       return false;
     }
+  }
+
+  String _getFileName(String modelName) {
+    String fileName = ReCase(modelName).snakeCase;
+
+    if (fileName.endsWith('_adapter_params')) {
+      fileName =
+          '${fileName.substring(0, fileName.length - '_adapter_params'.length)}_adapter';
+    } else if (fileName.endsWith('_params')) {
+      fileName =
+          '${fileName.substring(0, fileName.length - '_params'.length)}_adapter';
+    }
+
+    return fileName;
   }
 
   Future<bool> _generateDartClasses(Schema schema, String outputPath) async {
@@ -152,38 +184,42 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
-      
+
       final output = File(outputPath);
       final buffer = StringBuffer();
-      
+
       // Add necessary imports
       if (freezed) {
         buffer.writeln("// GENERATED CODE - DO NOT MODIFY MANUALLY");
         buffer.writeln();
-        buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
-        
+        buffer.writeln(
+          "import 'package:freezed_annotation/freezed_annotation.dart';",
+        );
+
         if (jsonSerializable) {
-          buffer.writeln("import 'package:json_annotation/json_annotation.dart';");
+          buffer.writeln(
+            "import 'package:json_annotation/json_annotation.dart';",
+          );
         }
-        
+
         buffer.writeln("import 'dart:convert';");
         buffer.writeln();
-        
+
         final fileName = path.basenameWithoutExtension(outputPath);
         buffer.writeln("part '$fileName.freezed.dart';");
-        
+
         if (jsonSerializable) {
           buffer.writeln("part '$fileName.g.dart';");
         }
-        
+
         buffer.writeln();
       }
-      
+
       // Generate classes for each model in the schema
       for (final model in schema.models) {
         _generateModelClass(buffer, model);
       }
-      
+
       await output.writeAsString(buffer.toString());
       return true;
     } catch (e) {
@@ -197,46 +233,50 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
       buffer.writeln("@freezed");
       buffer.writeln("class ${model.name} with _\$${model.name} {");
       buffer.writeln("  const factory ${model.name}({");
-      
+
       for (final field in model.fields) {
         final dartType = _mapTypeToDart(field.type);
         final nullableMark = field.isNullable ? '?' : '';
         final requiredMark = field.isNullable ? '' : 'required ';
-        
+
         if (field.description != null && field.description!.isNotEmpty) {
           buffer.writeln("    /// ${field.description}");
         }
-        
-        buffer.writeln("    $requiredMark$dartType$nullableMark ${field.name},");
+
+        buffer.writeln(
+          "    $requiredMark$dartType$nullableMark ${field.name},",
+        );
       }
-      
+
       buffer.writeln("  }) = _${model.name};");
       buffer.writeln();
-      
+
       if (jsonSerializable) {
-        buffer.writeln("  factory ${model.name}.fromJson(Map<String, dynamic> json) =>");
+        buffer.writeln(
+          "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
+        );
         buffer.writeln("      _\$${model.name}FromJson(json);");
       }
-      
+
       buffer.writeln("}");
     } else {
       // Implementation for regular Dart classes (non-Freezed)
       buffer.writeln("class ${model.name} {");
-      
+
       // Field declarations
       for (final field in model.fields) {
         final dartType = _mapTypeToDart(field.type);
         final nullableMark = field.isNullable ? '?' : '';
-        
+
         if (field.description != null && field.description!.isNotEmpty) {
           buffer.writeln("  /// ${field.description}");
         }
-        
+
         buffer.writeln("  final $dartType$nullableMark ${field.name};");
       }
-      
+
       buffer.writeln();
-      
+
       // Constructor
       buffer.writeln("  ${model.name}({");
       for (final field in model.fields) {
@@ -244,19 +284,23 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
         buffer.writeln("    ${requiredMark}this.${field.name},");
       }
       buffer.writeln("  });");
-      
+
       // fromJson
       if (jsonSerializable) {
         buffer.writeln();
-        buffer.writeln("  factory ${model.name}.fromJson(Map<String, dynamic> json) {");
+        buffer.writeln(
+          "  factory ${model.name}.fromJson(Map<String, dynamic> json) {",
+        );
         buffer.writeln("    return ${model.name}(");
         for (final field in model.fields) {
           final castOp = _getCastOperation(field.type, field.isNullable);
-          buffer.writeln("      ${field.name}: ${castOp("json['${field.name}']")},");
+          buffer.writeln(
+            "      ${field.name}: ${castOp("json['${field.name}']")},",
+          );
         }
         buffer.writeln("    );");
         buffer.writeln("  }");
-        
+
         // toJson
         buffer.writeln();
         buffer.writeln("  Map<String, dynamic> toJson() {");
@@ -267,10 +311,10 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
         buffer.writeln("    };");
         buffer.writeln("  }");
       }
-      
+
       buffer.writeln("}");
     }
-    
+
     buffer.writeln();
   }
 
@@ -301,35 +345,32 @@ Future<bool> _processSchemaData(dynamic jsonData, String outputPath) async {
   String Function(String) _getCastOperation(FieldType type, bool isNullable) {
     switch (type.kind) {
       case TypeKind.string:
-        return (source) => isNullable 
-            ? "$source as String?" 
-            : "$source as String";
+        return (source) =>
+            isNullable ? "$source as String?" : "$source as String";
       case TypeKind.integer:
-        return (source) => isNullable 
-            ? "$source as int?" 
-            : "$source as int";
+        return (source) => isNullable ? "$source as int?" : "$source as int";
       case TypeKind.float:
-        return (source) => isNullable 
-            ? "$source as double?" 
-            : "$source as double";
+        return (source) =>
+            isNullable ? "$source as double?" : "$source as double";
       case TypeKind.boolean:
-        return (source) => isNullable 
-            ? "$source as bool?" 
-            : "$source as bool";
+        return (source) => isNullable ? "$source as bool?" : "$source as bool";
       case TypeKind.dateTime:
-        return (source) => isNullable 
-            ? "$source != null ? DateTime.parse($source as String) : null" 
-            : "DateTime.parse($source as String)";
+        return (source) =>
+            isNullable
+                ? "$source != null ? DateTime.parse($source as String) : null"
+                : "DateTime.parse($source as String)";
       case TypeKind.array:
         final itemCast = _getCastOperation(type.itemType!, false);
-        return (source) => isNullable 
-            ? "$source != null ? ($source as List).map((e) => ${itemCast('e')}).toList() : null" 
-            : "($source as List).map((e) => ${itemCast('e')}).toList()";
+        return (source) =>
+            isNullable
+                ? "$source != null ? ($source as List).map((e) => ${itemCast('e')}).toList() : null"
+                : "($source as List).map((e) => ${itemCast('e')}).toList()";
       case TypeKind.reference:
         final ref = type.reference!;
-        return (source) => isNullable 
-            ? "$source != null ? $ref.fromJson($source as Map<String, dynamic>) : null" 
-            : "$ref.fromJson($source as Map<String, dynamic>)";
+        return (source) =>
+            isNullable
+                ? "$source != null ? $ref.fromJson($source as Map<String, dynamic>) : null"
+                : "$ref.fromJson($source as Map<String, dynamic>)";
       default:
         return (source) => source;
     }
