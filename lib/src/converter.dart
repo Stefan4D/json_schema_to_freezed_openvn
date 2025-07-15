@@ -206,13 +206,21 @@ class JsonSchemaToFreezed {
 
         for (final model in schema.models) {
           // Add imports for reference fields
-          final referenceFields = model.fields.where(
-            (f) => f.type.kind == TypeKind.reference,
-          );
+          final Set<String> referenceFields = {};
+
+          for (final field in model.fields) {
+            if (field.type.kind == TypeKind.reference) {
+              referenceFields.add(field.type.reference!);
+            } else if (field.type.kind == TypeKind.array &&
+                field.type.itemType?.kind == TypeKind.reference) {
+              referenceFields.add(field.type.itemType!.reference!);
+            }
+          }
+
           if (referenceFields.isNotEmpty) {
             buffer.writeln();
-            for (final field in referenceFields) {
-              final referenceFileName = _getFileName(field.type.reference!);
+            for (final fieldString in referenceFields) {
+              final referenceFileName = _getFileName(fieldString);
               buffer.writeln(
                 "import '../$referenceFileName/$referenceFileName.dart';",
               );
