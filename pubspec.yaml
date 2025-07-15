@@ -11,6 +11,9 @@ issue_tracker: https://github.com/Stefan4D/json_schema_to_freezed_openvn/issues
 environment:
   sdk: ^3.7.2
 
+executables:
+  json_schema_to_freezed_openvn: bin/json_schema_to_freezed.dart
+
 # Add regular dependencies here.
 dependencies:
   args: ^2.5.0

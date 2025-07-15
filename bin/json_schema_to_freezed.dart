@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:json_schema_to_freezed/json_schema_to_freezed.dart';
+import 'package:json_schema_to_freezed_openvn/json_schema_to_freezed.dart';
 import 'package:path/path.dart' as path;
 
 void main(List<String> arguments) async {
