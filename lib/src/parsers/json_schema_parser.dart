@@ -17,7 +17,7 @@ class JsonSchemaParser {
         final thenPrefixRaw = jsonData['if']['properties'].keys.first;
         final thenPrefix =
             ReCase(
-              thenPrefixRaw.substring(2, thenPrefixRaw.length - 1),
+              thenPrefixRaw.substring(2, thenPrefixRaw.length),
             ).pascalCase; // trim the prefix to remove "is" and convert to PascalCase for multi-word names
 
         // Need to handle the case where the JSON is a conditional schema
