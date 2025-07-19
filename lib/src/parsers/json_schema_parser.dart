@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../models/schema_model.dart';
 import 'package:recase/recase.dart';
 
@@ -8,6 +10,102 @@ class JsonSchemaParser {
 
     // Verificar se estamos lidando com um objeto raiz que contém vários modelos
     if (jsonData is Map<String, dynamic>) {
+      // Verify if the JSON contains conditional schemas
+      if (jsonData.containsKey('if') &&
+          jsonData.containsKey('then') &&
+          jsonData.containsKey('else')) {
+        final thenPrefixRaw = jsonData['if']['properties'].keys.first;
+        final thenPrefix =
+            ReCase(
+              thenPrefixRaw.substring(2, thenPrefixRaw.length - 1),
+            ).pascalCase; // trim the prefix to remove "is" and convert to PascalCase for multi-word names
+
+        // Need to handle the case where the JSON is a conditional schema
+        // Base class
+        // TODO: Need to handle removing the properties from the base class for the 'then' and 'else' cases
+        // This is determined by the first "required" array in the schema
+        // 'then' and 'else' then define additional "required" arrays, which need to be added to those child classes
+        if (jsonData.containsKey('properties') &&
+            jsonData.containsKey('title')) {
+          if (jsonData.containsKey('required')) {
+            // TODO: Handle required properties and removing 'then' and 'else' properties
+            // copy the jsonData to a new variable to avoid modifying the original
+            Map<String, dynamic> baseClassJsonData = Map<String, dynamic>.from(
+              jsonData,
+            );
+            Map<String, dynamic> thenClassJsonData = {};
+            Map<String, dynamic> elseClassJsonData = {};
+
+            // Remove 'then' and 'else' properties from the base class
+            // Look at the "then" and "else" properties to determine which properties to remove
+
+            if (jsonData.containsKey('then')) {
+              // Get the required properties from the 'then' case
+              final thenRequired =
+                  (jsonData['then']['required'] as List?) ?? [];
+              // Remove the properties that are required in the 'then' case
+              if (thenRequired is List<String>) {
+                for (final prop in baseClassJsonData['properties'].keys) {
+                  if (thenRequired.contains(prop)) {
+                    // Move the property to the 'then' class
+                    thenClassJsonData['properties'][prop] =
+                        baseClassJsonData['properties'][prop];
+                    // Add the property to the 'then' class required list
+                    thenClassJsonData['required'] ??= [];
+                    thenClassJsonData['required'].add(prop);
+                    // Remove the property from the base class
+                    baseClassJsonData['properties'].remove(prop);
+                  }
+                }
+              }
+            }
+
+            if (jsonData.containsKey('else')) {
+              // Get the required properties from the 'else' case
+              final elseRequired =
+                  (jsonData['else']['required'] as List?) ?? [];
+              // Remove the properties that are required in the 'else' case
+              if (elseRequired is List<String>) {
+                for (final prop in baseClassJsonData['properties'].keys) {
+                  if (elseRequired.contains(prop)) {
+                    // Move the property to the 'else' class
+                    elseClassJsonData['properties'][prop] =
+                        baseClassJsonData['properties'][prop];
+                    // Add the property to the 'else' class required list
+                    elseClassJsonData['required'] ??= [];
+                    elseClassJsonData['required'].add(prop);
+                    // Remove the property from the base class
+                    baseClassJsonData['properties'].remove(prop);
+                  }
+                }
+              }
+            }
+
+            // need a new helper function to parse the model as an abstract class with polymorphic children
+            // TODO: Create a new method to handle polymorphic models
+            models.add(_parseModel(jsonData['title'], baseClassJsonData));
+            models.add(
+              _parseModel(thenPrefix + jsonData['title'], thenClassJsonData),
+            );
+            models.add(
+              _parseModel("Default ${jsonData['title']}", elseClassJsonData),
+            );
+          }
+
+          // Then class
+          // Want to create a 'base' class and then 2 child classes for 'then' and 'else'
+          // The base class will have all the common properties in "properties"
+          // The 'then' and 'else' classes will have the specific properties for each case
+
+          // return Schema(models: models);
+          return Schema(
+            models: models,
+            version: jsonData['\$schema'] as String?,
+          );
+          // return Schema(models: models, version: jsonData['\$schema'] as String?);
+        }
+      }
+
       // Iterar por cada entrada no objeto principal
       jsonData.forEach((modelName, modelData) {
         // Verificar se o modelo tem o formato esperado (com 'schema' e 'description')

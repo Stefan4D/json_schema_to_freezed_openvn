@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:json_schema_to_freezed/json_schema_to_freezed.dart';
+import 'package:json_schema_to_freezed_openvn/json_schema_to_freezed.dart';
 import 'package:path/path.dart' as path;
 
 void main() async {
@@ -46,28 +46,22 @@ void main() async {
   final tempDir = Directory.systemTemp;
   final schemaFile = File(path.join(tempDir.path, 'example_schema.json'));
   await schemaFile.writeAsString(schemaJson);
-  
+
   // Define output path
   final outputPath = path.join(tempDir.path, 'generated_product.dart');
-  
+
   // Create converter instance
-  final converter = JsonSchemaToFreezed(
-    freezed: true,
-    jsonSerializable: true,
-  );
-  
+  final converter = JsonSchemaToFreezed(freezed: true, jsonSerializable: true);
+
   // Convert schema to Dart class
-  final success = await converter.convertFromFile(
-    schemaFile.path,
-    outputPath,
-  );
+  final success = await converter.convertFromFile(schemaFile.path, outputPath);
 
   // Is possible to convert from URL as well
   // final successFromUrl = await converter.convertFromUrl(
   //   'https://example.com/schema.json',
   //   outputPath,
   // );
-  
+
   if (success) {
     print('✅ Conversion successful! Generated file at: $outputPath');
     print('Generated content:');
@@ -76,7 +70,7 @@ void main() async {
   } else {
     print('❌ Conversion failed');
   }
-  
+
   // Clean up
   await schemaFile.delete();
 }
