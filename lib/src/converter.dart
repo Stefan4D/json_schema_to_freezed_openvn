@@ -310,12 +310,13 @@ class JsonSchemaToFreezed {
               // }
               final dartType = _mapTypeToDart(field.type);
               final nullableMark = field.isNullable ? '?' : '';
-              final requiredMark = field.isNullable ? '' : 'required ';
               final defaultUnionValue = variant.unionValue ? true : false;
               final defaultMark =
                   field.name == model.unionKey
                       ? "@Default($defaultUnionValue) "
                       : '';
+              final requiredMark =
+                  field.isNullable && defaultMark != '' ? '' : 'required ';
 
               if (field.description != null && field.description!.isNotEmpty) {
                 buffer.writeln("    /// ${field.description}");
