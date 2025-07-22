@@ -19,6 +19,21 @@ class JsonSchemaParser {
             ReCase(
               thenPrefixRaw.substring(2, thenPrefixRaw.length),
             ).pascalCase; // trim the prefix to remove "is" and convert to PascalCase for multi-word names
+        final elsePrefix = 'Default';
+
+        // Extract the base class name and names for 'then' and 'else' cases
+        final baseClassName = jsonData['title'] ?? 'BaseClass';
+        final thenClassName = thenPrefix + baseClassName;
+        final elseClassName = elsePrefix + baseClassName;
+
+        final String switchKey = jsonData['if']['properties'].keys.first;
+        final bool switchKeyValueForThen =
+            jsonData['if']['properties'][switchKey]['const'] as bool;
+
+        final Map<String, String> switchCases = {
+          switchKeyValueForThen.toString(): thenClassName,
+          (!switchKeyValueForThen).toString(): elseClassName,
+        };
 
         // Need to handle the case where the JSON is a conditional schema
         // Base class
@@ -84,24 +99,20 @@ class JsonSchemaParser {
             // need a new helper function to parse the model as an abstract class with polymorphic children
             // TODO: Create a new method to handle polymorphic models
             // Base class
-            Model baseModel = _parseModel(jsonData['title'], baseClassJsonData);
+            Model baseModel = _parseModel(baseClassName, baseClassJsonData);
             // baseModel.isAbstract = true; // Mark the base class as abstract
+            baseModel.switchKey = switchKey;
+            baseModel.switchCases = switchCases;
             models.add(baseModel);
 
             // Then class
-            Model thenModel = _parseModel(
-              thenPrefix + jsonData['title'],
-              thenClassJsonData,
-            );
+            Model thenModel = _parseModel(thenClassName, thenClassJsonData);
             thenModel.parentClass = jsonData['title'];
             thenModel.isAbstract = false; // Mark the 'then' class as concrete
             models.add(thenModel);
 
             // Else class
-            Model elseModel = _parseModel(
-              "Default${jsonData['title']}",
-              elseClassJsonData,
-            );
+            Model elseModel = _parseModel(elseClassName, elseClassJsonData);
             elseModel.parentClass = jsonData['title'];
             elseModel.isAbstract = false; // Mark the 'else' class as concrete
             models.add(elseModel);

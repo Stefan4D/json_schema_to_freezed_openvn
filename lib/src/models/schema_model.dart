@@ -15,6 +15,9 @@ class Model {
   final bool isEnum;
   String? parentClass; // Optional parent class for inheritance
   bool isAbstract;
+  String? switchKey; // Optional switch key for polymorphic models
+  Map<String, String>?
+  switchCases; // Optional switch cases for polymorphic models
 
   Model({
     required this.name,
@@ -23,6 +26,8 @@ class Model {
     this.isEnum = false,
     this.parentClass,
     this.isAbstract = true,
+    this.switchKey,
+    this.switchCases,
   });
 }
 

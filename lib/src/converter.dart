@@ -292,10 +292,47 @@ class JsonSchemaToFreezed {
       buffer.writeln();
 
       if (jsonSerializable) {
-        buffer.writeln(
-          "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
-        );
-        buffer.writeln("      _\$${model.name}FromJson(json);");
+        // buffer.writeln(
+        //   "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
+        // );
+        // buffer.writeln("      _\$${model.name}FromJson(json);");
+        if (model.switchKey != null && model.switchCases != null) {
+          final switchKey = model.switchKey!;
+          final switchCases = model.switchCases!;
+
+          buffer.writeln(
+            "  factory ${model.name}.fromJson(Map<String, dynamic> json) {",
+          );
+          buffer.writeln(
+            "    final ${switchKey}Value = json['$switchKey'] as bool;",
+          );
+          buffer.writeln("      switch (${switchKey}Value) {");
+          switchCases.forEach((switchCase, subClass) {
+            String caseLiteral;
+            if (switchCase == 'true' || switchCase == 'false') {
+              caseLiteral = switchCase;
+            } else {
+              caseLiteral = "'$switchCase'";
+            }
+
+            buffer.writeln("        case $caseLiteral:");
+            // Call the public constructor of the subclass
+            buffer.writeln("          return ${subClass}.fromJson(json);");
+          });
+
+          // Default case for unknown switch keys (debugging purposes)
+          buffer.writeln("        default:");
+          buffer.writeln(
+            "          throw Exception('Unknown switch case for \\'$switchKey\\': \$${switchKey}Value');",
+          );
+          buffer.writeln("      }");
+          buffer.writeln("  }");
+        } else {
+          buffer.writeln(
+            "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
+          );
+          buffer.writeln("      _\$${model.name}FromJson(json);");
+        }
       }
 
       buffer.writeln("}");
