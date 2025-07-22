@@ -284,6 +284,10 @@ class JsonSchemaToFreezed {
             final variantName = variant.variantName;
             final variantFields = variant.fields;
 
+            if (variant.isDefaultVariant) {
+              buffer.writeln('@FreezedUnionValue(\'${variant.unionValue}\')');
+            }
+
             buffer.writeln(
               "  const factory ${model.name}${variantName != null ? '.${ReCase(variantName).camelCase}' : ''}({",
             );
@@ -294,13 +298,18 @@ class JsonSchemaToFreezed {
               final dartType = _mapTypeToDart(field.type);
               final nullableMark = field.isNullable ? '?' : '';
               final requiredMark = field.isNullable ? '' : 'required ';
+              final defaultUnionValue = variant.unionValue ? 'true' : 'false';
+              final defaultMark =
+                  field.name == model.unionKey
+                      ? "@Default(${defaultUnionValue as bool}) "
+                      : '';
 
               if (field.description != null && field.description!.isNotEmpty) {
                 buffer.writeln("    /// ${field.description}");
               }
 
               buffer.writeln(
-                "    $requiredMark$dartType$nullableMark ${field.name},",
+                "    $defaultMark$requiredMark$dartType$nullableMark ${field.name},",
               );
             }
             buffer.writeln("  }) = _$variantName;");
