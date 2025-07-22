@@ -298,10 +298,10 @@ class JsonSchemaToFreezed {
               final dartType = _mapTypeToDart(field.type);
               final nullableMark = field.isNullable ? '?' : '';
               final requiredMark = field.isNullable ? '' : 'required ';
-              final defaultUnionValue = variant.unionValue ? 'true' : 'false';
+              final defaultUnionValue = variant.unionValue ? true : false;
               final defaultMark =
                   field.name == model.unionKey
-                      ? "@Default(${defaultUnionValue as bool}) "
+                      ? "@Default($defaultUnionValue) "
                       : '';
 
               if (field.description != null && field.description!.isNotEmpty) {
