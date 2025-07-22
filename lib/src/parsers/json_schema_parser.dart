@@ -49,12 +49,12 @@ class JsonSchemaParser {
               jsonData,
             );
             Map<String, dynamic> thenClassJsonData = {};
-            thenClassJsonData['properties'] = <String, dynamic>{};
-            thenClassJsonData['required'] = <String>[];
+            thenClassJsonData['properties'] ??= <String, dynamic>{};
+            thenClassJsonData['required'] ??= <String>[];
 
             Map<String, dynamic> elseClassJsonData = {};
-            elseClassJsonData['properties'] = <String, dynamic>{};
-            elseClassJsonData['required'] = <String>[];
+            elseClassJsonData['properties'] ??= <String, dynamic>{};
+            elseClassJsonData['required'] ??= <String>[];
 
             // Remove 'then' and 'else' properties from the base class
             // Look at the "then" and "else" properties to determine which properties to remove
