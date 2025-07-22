@@ -49,7 +49,12 @@ class JsonSchemaParser {
               jsonData,
             );
             Map<String, dynamic> thenClassJsonData = {};
+            thenClassJsonData['properties'] = <String, dynamic>{};
+            thenClassJsonData['required'] = <String>[];
+
             Map<String, dynamic> elseClassJsonData = {};
+            elseClassJsonData['properties'] = <String, dynamic>{};
+            elseClassJsonData['required'] = <String>[];
 
             // Remove 'then' and 'else' properties from the base class
             // Look at the "then" and "else" properties to determine which properties to remove
@@ -66,7 +71,7 @@ class JsonSchemaParser {
                     thenClassJsonData['properties'][prop] =
                         baseClassJsonData['properties'][prop];
                     // Add the property to the 'then' class required list
-                    thenClassJsonData['required'] ??= [];
+                    // thenClassJsonData['required'] ??= [];
                     thenClassJsonData['required'].add(prop);
                     // Remove the property from the base class
                     baseClassJsonData['properties'].remove(prop);
@@ -87,7 +92,7 @@ class JsonSchemaParser {
                     elseClassJsonData['properties'][prop] =
                         baseClassJsonData['properties'][prop];
                     // Add the property to the 'else' class required list
-                    elseClassJsonData['required'] ??= [];
+                    // elseClassJsonData['required'] ??= [];
                     elseClassJsonData['required'].add(prop);
                     // Remove the property from the base class
                     baseClassJsonData['properties'].remove(prop);
