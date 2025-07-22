@@ -266,6 +266,10 @@ class JsonSchemaToFreezed {
       );
       buffer.writeln("  const factory ${model.name}({");
 
+      // Internal variables to hold parentClass and isAbstract for later use to allow removal
+      final bool hasParentClass = model.parentClass != null;
+      final bool isAbstract = model.isAbstract;
+
       // If the model has a parent class, remove the parentClass field from fields to avoid adding to the generated class
       if (model.parentClass != null) {
         model.fields.removeWhere((field) => field.name == 'parentClass');
@@ -289,6 +293,13 @@ class JsonSchemaToFreezed {
       }
 
       buffer.writeln("  }) = _${model.name};");
+      if (!isAbstract) {
+        if (hasParentClass) {
+          buffer.writeln("  const ${model.name}._() : super._();");
+        } else {
+          buffer.writeln("  const ${model.name}._();");
+        }
+      }
       buffer.writeln();
 
       if (jsonSerializable) {
