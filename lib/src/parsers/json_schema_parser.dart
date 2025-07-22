@@ -141,6 +141,7 @@ class JsonSchemaParser {
             // baseModel.isAbstract = true; // Mark the base class as abstract
             baseModel.switchKey = switchKey;
             baseModel.switchCases = switchCases;
+            baseModel.isParentClass = true; // Mark the base class as a parent
             models.add(baseModel);
 
             // Then class

@@ -18,6 +18,7 @@ class Model {
   String? switchKey; // Optional switch key for polymorphic models
   Map<String, String>?
   switchCases; // Optional switch cases for polymorphic models
+  bool isParentClass; // Flag to indicate if this is a parent class
 
   Model({
     required this.name,
@@ -28,6 +29,7 @@ class Model {
     this.isAbstract = true,
     this.switchKey,
     this.switchCases,
+    this.isParentClass = false,
   });
 }
 

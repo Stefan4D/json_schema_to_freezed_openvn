@@ -270,7 +270,10 @@ class JsonSchemaToFreezed {
       final bool isAbstract = model.isAbstract;
 
       // Private Constructor
-      buffer.writeln("  const ${model.name}._();");
+      if (model.isParentClass) {
+        buffer.writeln("  const ${model.name}._();");
+        buffer.writeln();
+      }
 
       // Factory Constructor
       buffer.writeln("  const factory ${model.name}({");
