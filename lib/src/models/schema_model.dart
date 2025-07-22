@@ -14,6 +14,7 @@ class Model {
   final String? description;
   final bool isEnum;
   String? parentClass; // Optional parent class for inheritance
+  bool isAbstract;
 
   Model({
     required this.name,
@@ -21,6 +22,7 @@ class Model {
     this.description,
     this.isEnum = false,
     this.parentClass,
+    this.isAbstract = false,
   });
 }
 
