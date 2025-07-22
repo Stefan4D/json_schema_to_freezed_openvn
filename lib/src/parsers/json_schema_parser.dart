@@ -86,12 +86,18 @@ class JsonSchemaParser {
             for (final prop in elseRequired) {
               thenClassJsonData['properties'].remove(prop);
               thenClassJsonData['required'].remove(prop);
+
+              // Explicitly add the property to the 'else' class required list
+              elseClassJsonData['required'].add(prop);
             }
 
             // Remove the properties from the elseClass that are required in the 'then' case
             for (final prop in thenRequired) {
               elseClassJsonData['properties'].remove(prop);
               elseClassJsonData['required'].remove(prop);
+
+              // Explicitly add the property to the 'then' class required list
+              thenClassJsonData['required'].add(prop);
             }
 
             // Remove the properties that are required in the 'then' case
