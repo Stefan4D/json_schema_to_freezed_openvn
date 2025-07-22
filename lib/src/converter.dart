@@ -316,7 +316,7 @@ class JsonSchemaToFreezed {
                       ? "@Default($defaultUnionValue) "
                       : '';
               final requiredMark =
-                  field.isNullable && defaultMark != '' ? '' : 'required ';
+                  field.isNullable || defaultMark.isNotEmpty ? '' : 'required ';
 
               if (field.description != null && field.description!.isNotEmpty) {
                 buffer.writeln("    /// ${field.description}");
