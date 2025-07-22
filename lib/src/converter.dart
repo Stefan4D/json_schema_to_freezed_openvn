@@ -303,6 +303,7 @@ class JsonSchemaToFreezed {
       buffer.writeln("  }) = _${model.name};");
       if (!isAbstract) {
         if (hasParentClass) {
+          buffer.writeln();
           buffer.writeln("  const ${model.name}._() : super._();");
         } else {
           buffer.writeln("  const ${model.name}._();");
@@ -360,7 +361,7 @@ class JsonSchemaToFreezed {
           buffer.writeln("  @override");
         }
         buffer.writeln(
-          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this);",
+          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this as _\$${model.name});",
         );
       }
 
