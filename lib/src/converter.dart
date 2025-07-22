@@ -217,6 +217,19 @@ class JsonSchemaToFreezed {
             }
           }
 
+          if (model.unionVariants != null) {
+            for (final variant in model.unionVariants!) {
+              for (final field in variant.fields) {
+                if (field.type.kind == TypeKind.reference) {
+                  referenceFields.add(field.type.reference!);
+                } else if (field.type.kind == TypeKind.array &&
+                    field.type.itemType?.kind == TypeKind.reference) {
+                  referenceFields.add(field.type.itemType!.reference!);
+                }
+              }
+            }
+          }
+
           if (referenceFields.isNotEmpty) {
             buffer.writeln();
             for (final fieldString in referenceFields) {
