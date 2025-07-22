@@ -264,11 +264,16 @@ class JsonSchemaToFreezed {
       buffer.writeln(
         "${abstractClass}class ${model.name} ${parentClass}with _\$${model.name} {",
       );
-      buffer.writeln("  const factory ${model.name}({");
 
       // Internal variables to hold parentClass and isAbstract for later use to allow removal
       final bool hasParentClass = model.parentClass != null;
       final bool isAbstract = model.isAbstract;
+
+      // Private Constructor
+      buffer.writeln("  const ${model.name}._();");
+
+      // Factory Constructor
+      buffer.writeln("  const factory ${model.name}({");
 
       // If the model has a parent class, remove the parentClass field from fields to avoid adding to the generated class
       if (model.parentClass != null) {
@@ -311,6 +316,7 @@ class JsonSchemaToFreezed {
           final switchKey = model.switchKey!;
           final switchCases = model.switchCases!;
 
+          // fromJson factory
           buffer.writeln(
             "  factory ${model.name}.fromJson(Map<String, dynamic> json) {",
           );
@@ -344,6 +350,13 @@ class JsonSchemaToFreezed {
           );
           buffer.writeln("      _\$${model.name}FromJson(json);");
         }
+
+        // toJson method
+        buffer.writeln();
+        buffer.writeln("  @override");
+        buffer.writeln(
+          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this);",
+        );
       }
 
       buffer.writeln("}");
