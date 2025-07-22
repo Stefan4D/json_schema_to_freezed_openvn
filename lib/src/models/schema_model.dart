@@ -13,23 +13,25 @@ class Model {
   final List<Field> fields;
   final String? description;
   final bool isEnum;
-  String? parentClass; // Optional parent class for inheritance
+  // String? parentClass; // Optional parent class for inheritance
   bool isAbstract;
-  String? switchKey; // Optional switch key for polymorphic models
-  Map<String, String>?
-  switchCases; // Optional switch cases for polymorphic models
-  bool isParentClass; // Flag to indicate if this is a parent class
+  String? unionKey; // Optional union key for polymorphic models
+  List<UnionVariant>?
+  unionVariants; // Optional union variants for polymorphic models
+  // Map<String, String>?
+  // switchCases; // Optional switch cases for polymorphic models
+  // bool isParentClass; // Flag to indicate if this is a parent class
 
   Model({
     required this.name,
     required this.fields,
     this.description,
     this.isEnum = false,
-    this.parentClass,
+    // this.parentClass,
     this.isAbstract = true,
-    this.switchKey,
-    this.switchCases,
-    this.isParentClass = false,
+    this.unionKey,
+    // this.switchCases,
+    // this.isParentClass = false,
   });
 }
 
@@ -75,4 +77,19 @@ enum TypeKind {
   reference,
   enum_,
   unknown,
+}
+
+class UnionVariant {
+  final String? variantName;
+  final bool unionValue;
+  // List of fields for the variant include base class fields
+  final List<Field> fields;
+  final bool isDefaultVariant;
+
+  UnionVariant({
+    this.variantName,
+    required this.unionValue,
+    required this.fields,
+    this.isDefaultVariant = false,
+  });
 }

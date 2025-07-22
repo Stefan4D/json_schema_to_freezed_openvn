@@ -255,114 +255,147 @@ class JsonSchemaToFreezed {
 
   void _generateModelClass(StringBuffer buffer, Model model) {
     if (freezed) {
-      buffer.writeln("@freezed");
+      if (model.unionKey != null) {
+        buffer.writeln("@freezed(unionKey: '${model.unionKey}')");
+      } else {
+        buffer.writeln("@freezed");
+      }
       // Check if the model is a child of another class
       final abstractClass = model.isAbstract ? "abstract " : "";
 
-      final parentClass =
-          model.parentClass != null ? "implements ${model.parentClass} " : "";
+      // final parentClass =
+      // model.parentClass != null ? "extends ${model.parentClass} " : "";
       buffer.writeln(
-        "${abstractClass}class ${model.name} ${parentClass}with _\$${model.name} {",
+        "${abstractClass}class ${model.name} with _\$${model.name} {",
       );
 
       // Internal variables to hold parentClass and isAbstract for later use to allow removal
-      final bool hasParentClass = model.parentClass != null;
-      final bool isAbstract = model.isAbstract;
+      // final bool hasParentClass = model.parentClass != null;
+      // final bool isAbstract = model.isAbstract;
 
       // Private Constructor
-      if (model.isParentClass) {
+      if (model.unionKey != null) {
         buffer.writeln("  const ${model.name}._();");
         buffer.writeln();
-      }
 
-      // Factory Constructor
-      buffer.writeln("  const factory ${model.name}({");
+        // Implement the factory constructors for the union variants
+        if (model.unionVariants != null && model.unionVariants!.isNotEmpty) {
+          for (final variant in model.unionVariants!) {
+            final variantName = variant.variantName;
+            final variantFields = variant.fields;
 
-      // If the model has a parent class, remove the parentClass field from fields to avoid adding to the generated class
-      if (model.parentClass != null) {
-        model.fields.removeWhere((field) => field.name == 'parentClass');
-      }
+            buffer.writeln(
+              "  const factory ${model.name}${variantName != null ? '.$variantName' : ''}({",
+            );
+            for (final field in variantFields) {
+              //   final dartType = _mapTypeToDart(field.type);
+              //   buffer.writeln("    $dartType ${field.name},");
+              // }
+              final dartType = _mapTypeToDart(field.type);
+              final nullableMark = field.isNullable ? '?' : '';
+              final requiredMark = field.isNullable ? '' : 'required ';
 
-      // Remove the isAbstract field
-      model.fields.removeWhere((field) => field.name == 'isAbstract');
+              if (field.description != null && field.description!.isNotEmpty) {
+                buffer.writeln("    /// ${field.description}");
+              }
 
-      for (final field in model.fields) {
-        final dartType = _mapTypeToDart(field.type);
-        final nullableMark = field.isNullable ? '?' : '';
-        final requiredMark = field.isNullable ? '' : 'required ';
+              buffer.writeln(
+                "    $requiredMark$dartType$nullableMark ${field.name},",
+              );
+            }
+            buffer.writeln("  }) = _${model.name}.$variantName;");
+          }
+        }
+      } else {
+        // Factory Constructor
+        buffer.writeln("  const factory ${model.name}({");
 
-        if (field.description != null && field.description!.isNotEmpty) {
-          buffer.writeln("    /// ${field.description}");
+        // If the model has a parent class, remove the parentClass field from fields to avoid adding to the generated class
+        // if (model.parentClass != null) {
+        //   model.fields.removeWhere((field) => field.name == 'parentClass');
+        // }
+
+        // Remove the isAbstract field
+        // model.fields.removeWhere((field) => field.name == 'isAbstract');
+
+        for (final field in model.fields) {
+          final dartType = _mapTypeToDart(field.type);
+          final nullableMark = field.isNullable ? '?' : '';
+          final requiredMark = field.isNullable ? '' : 'required ';
+
+          if (field.description != null && field.description!.isNotEmpty) {
+            buffer.writeln("    /// ${field.description}");
+          }
+
+          buffer.writeln(
+            "    $requiredMark$dartType$nullableMark ${field.name},",
+          );
         }
 
-        buffer.writeln(
-          "    $requiredMark$dartType$nullableMark ${field.name},",
-        );
+        buffer.writeln("  }) = _${model.name};");
+        // if (!isAbstract) {
+        //   if (hasParentClass) {
+        //     buffer.writeln();
+        //     buffer.writeln("  const ${model.name}._() : super._();");
+        //   } else {
+        //     buffer.writeln("  const ${model.name}._();");
+        //   }
+        // }
+        buffer.writeln();
       }
-
-      buffer.writeln("  }) = _${model.name};");
-      if (!isAbstract) {
-        if (hasParentClass) {
-          buffer.writeln();
-          buffer.writeln("  const ${model.name}._() : super._();");
-        } else {
-          buffer.writeln("  const ${model.name}._();");
-        }
-      }
-      buffer.writeln();
 
       if (jsonSerializable) {
-        // buffer.writeln(
-        //   "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
-        // );
-        // buffer.writeln("      _\$${model.name}FromJson(json);");
-        if (model.switchKey != null && model.switchCases != null) {
-          final switchKey = model.switchKey!;
-          final switchCases = model.switchCases!;
-
-          // fromJson factory
-          buffer.writeln(
-            "  factory ${model.name}.fromJson(Map<String, dynamic> json) {",
-          );
-          buffer.writeln(
-            "    final ${switchKey}Value = json['$switchKey'] as bool;",
-          );
-          buffer.writeln("      switch (${switchKey}Value) {");
-          switchCases.forEach((switchCase, subClass) {
-            String caseLiteral;
-            if (switchCase == 'true' || switchCase == 'false') {
-              caseLiteral = switchCase;
-            } else {
-              caseLiteral = "'$switchCase'";
-            }
-
-            buffer.writeln("        case $caseLiteral:");
-            // Call the public constructor of the subclass
-            buffer.writeln("          return ${subClass}.fromJson(json);");
-          });
-
-          // Default case for unknown switch keys (debugging purposes)
-          buffer.writeln("        default:");
-          buffer.writeln(
-            "          throw Exception('Unknown switch case for \\'$switchKey\\': \$${switchKey}Value');",
-          );
-          buffer.writeln("      }");
-          buffer.writeln("  }");
-        } else {
-          buffer.writeln(
-            "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
-          );
-          buffer.writeln("      _\$${model.name}FromJson(json);");
-        }
-
-        // toJson method
-        buffer.writeln();
-        if (hasParentClass) {
-          buffer.writeln("  @override");
-        }
         buffer.writeln(
-          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this as _${model.name});",
+          "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
         );
+        buffer.writeln("      _\$${model.name}FromJson(json);");
+        // if (model.switchKey != null && model.switchCases != null) {
+        //   final switchKey = model.switchKey!;
+        //   final switchCases = model.switchCases!;
+
+        //   // fromJson factory
+        //   buffer.writeln(
+        //     "  factory ${model.name}.fromJson(Map<String, dynamic> json) {",
+        //   );
+        //   buffer.writeln(
+        //     "    final ${switchKey}Value = json['$switchKey'] as bool;",
+        //   );
+        //   buffer.writeln("      switch (${switchKey}Value) {");
+        //   switchCases.forEach((switchCase, subClass) {
+        //     String caseLiteral;
+        //     if (switchCase == 'true' || switchCase == 'false') {
+        //       caseLiteral = switchCase;
+        //     } else {
+        //       caseLiteral = "'$switchCase'";
+        //     }
+
+        //     buffer.writeln("        case $caseLiteral:");
+        //     // Call the public constructor of the subclass
+        //     buffer.writeln("          return ${subClass}.fromJson(json);");
+        //   });
+
+        //   // Default case for unknown switch keys (debugging purposes)
+        //   buffer.writeln("        default:");
+        //   buffer.writeln(
+        //     "          throw Exception('Unknown switch case for \\'$switchKey\\': \$${switchKey}Value');",
+        //   );
+        //   buffer.writeln("      }");
+        //   buffer.writeln("  }");
+        // } else {
+        //   buffer.writeln(
+        //     "  factory ${model.name}.fromJson(Map<String, dynamic> json) =>",
+        //   );
+        //   buffer.writeln("      _\$${model.name}FromJson(json);");
+        // }
+
+        // // toJson method
+        // buffer.writeln();
+        // if (hasParentClass) {
+        //   buffer.writeln("  @override");
+        // }
+        // buffer.writeln(
+        //   "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this as _${model.name});",
+        // );
       }
 
       buffer.writeln("}");

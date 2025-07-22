@@ -27,14 +27,14 @@ class JsonSchemaParser {
         final elseClassName = elsePrefix + baseClassName;
 
         // Assume only one switch key for simplicity (same as thenPrefixRaw)
-        final String switchKey = jsonData['if']['properties'].keys.first;
+        final String unionKey = jsonData['if']['properties'].keys.first;
         final bool switchKeyValueForThen =
-            jsonData['if']['properties'][switchKey]['const'] as bool;
+            jsonData['if']['properties'][unionKey]['const'] as bool;
 
-        final Map<String, String> switchCases = {
-          switchKeyValueForThen.toString(): thenClassName,
-          (!switchKeyValueForThen).toString(): elseClassName,
-        };
+        // final Map<String, String> switchCases = {
+        //   switchKeyValueForThen.toString(): thenClassName,
+        //   (!switchKeyValueForThen).toString(): elseClassName,
+        // };
 
         // Need to handle the case where the JSON is a conditional schema
         // Base class
@@ -139,22 +139,48 @@ class JsonSchemaParser {
             // Base class
             Model baseModel = _parseModel(baseClassName, baseClassJsonData);
             // baseModel.isAbstract = true; // Mark the base class as abstract
-            baseModel.switchKey = switchKey;
-            baseModel.switchCases = switchCases;
-            baseModel.isParentClass = true; // Mark the base class as a parent
+
+            // TODO: ***
+            List<UnionVariant> unionVariants = [];
+            // List<Field> thenFields = [];
+            // List<Field> elseFields = [];
+
+            // Parse the 'then' class
+            Model thenModel = _parseModel(thenClassName, thenClassJsonData);
+            Model elseModel = _parseModel(elseClassName, elseClassJsonData);
+
+            unionVariants.add(
+              UnionVariant(
+                variantName: thenClassName,
+                unionValue: switchKeyValueForThen,
+                fields: baseModel.fields + thenModel.fields,
+              ),
+            );
+            unionVariants.add(
+              UnionVariant(
+                variantName: elseClassName,
+                unionValue: !switchKeyValueForThen,
+                fields: baseModel.fields + elseModel.fields,
+              ),
+            );
+
+            baseModel.unionKey = unionKey;
+            baseModel.unionVariants = unionVariants;
+            // baseModel.switchCases = switchCases;
+            // baseModel.isParentClass = true; // Mark the base class as a parent
             models.add(baseModel);
 
             // Then class
-            Model thenModel = _parseModel(thenClassName, thenClassJsonData);
-            thenModel.parentClass = jsonData['title'];
-            thenModel.isAbstract = false; // Mark the 'then' class as concrete
-            models.add(thenModel);
+            // Model thenModel = _parseModel(thenClassName, thenClassJsonData);
+            // thenModel.parentClass = jsonData['title'];
+            // thenModel.isAbstract = false; // Mark the 'then' class as concrete
+            // models.add(thenModel);
 
-            // Else class
-            Model elseModel = _parseModel(elseClassName, elseClassJsonData);
-            elseModel.parentClass = jsonData['title'];
-            elseModel.isAbstract = false; // Mark the 'else' class as concrete
-            models.add(elseModel);
+            // // Else class
+            // Model elseModel = _parseModel(elseClassName, elseClassJsonData);
+            // elseModel.parentClass = jsonData['title'];
+            // elseModel.isAbstract = false; // Mark the 'else' class as concrete
+            // models.add(elseModel);
           }
 
           // Then class
