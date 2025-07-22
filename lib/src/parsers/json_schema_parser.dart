@@ -26,6 +26,7 @@ class JsonSchemaParser {
         final thenClassName = thenPrefix + baseClassName;
         final elseClassName = elsePrefix + baseClassName;
 
+        // Assume only one switch key for simplicity (same as thenPrefixRaw)
         final String switchKey = jsonData['if']['properties'].keys.first;
         final bool switchKeyValueForThen =
             jsonData['if']['properties'][switchKey]['const'] as bool;
@@ -44,62 +45,88 @@ class JsonSchemaParser {
             jsonData.containsKey('title')) {
           if (jsonData.containsKey('required')) {
             // TODO: Handle required properties and removing 'then' and 'else' properties
-            // copy the jsonData to a new variable to avoid modifying the original
-            Map<String, dynamic> baseClassJsonData = Map<String, dynamic>.from(
-              jsonData,
-            );
-            Map<String, dynamic> thenClassJsonData = {};
-            thenClassJsonData['properties'] ??= <String, dynamic>{};
-            thenClassJsonData['required'] ??= <String>[];
 
-            Map<String, dynamic> elseClassJsonData = {};
-            elseClassJsonData['properties'] ??= <String, dynamic>{};
-            elseClassJsonData['required'] ??= <String>[];
+            // copy the jsonData to a new variable to avoid modifying the original
+            Map<String, dynamic> baseClassJsonData = jsonDecode(
+              jsonEncode(jsonData),
+            );
+
+            // Create deep copies for 'then' and 'else' classes
+            Map<String, dynamic> thenClassJsonData = jsonDecode(
+              jsonEncode(baseClassJsonData),
+            );
+            Map<String, dynamic> elseClassJsonData = jsonDecode(
+              jsonEncode(baseClassJsonData),
+            );
+
+            // Map<String, dynamic> thenClassJsonData = {};
+            // thenClassJsonData['properties'] ??= <String, dynamic>{};
+            // thenClassJsonData['required'] ??= <String>[];
+
+            // Map<String, dynamic> elseClassJsonData = {};
+            // elseClassJsonData['properties'] ??= <String, dynamic>{};
+            // elseClassJsonData['required'] ??= <String>[];
 
             // Remove 'then' and 'else' properties from the base class
             // Look at the "then" and "else" properties to determine which properties to remove
 
-            if (jsonData.containsKey('then')) {
-              // Get the required properties from the 'then' case
-              final thenRequired =
-                  (jsonData['then']['required'] as List?) ?? [];
-              // Remove the properties that are required in the 'then' case
-              if (thenRequired is List<String>) {
-                for (final prop in baseClassJsonData['properties'].keys) {
-                  if (thenRequired.contains(prop)) {
-                    // Move the property to the 'then' class
-                    thenClassJsonData['properties'][prop] =
-                        baseClassJsonData['properties'][prop];
-                    // Add the property to the 'then' class required list
-                    // thenClassJsonData['required'] ??= [];
-                    thenClassJsonData['required'].add(prop);
-                    // Remove the property from the base class
-                    baseClassJsonData['properties'].remove(prop);
-                  }
-                }
-              }
+            // Get the required properties from the 'then' case
+            final thenRequired = (jsonData['then']['required'] as List?) ?? [];
+            final elseRequired = (jsonData['else']['required'] as List?) ?? [];
+
+            final subClassRequired = thenRequired + elseRequired;
+
+            // Remove the properties that are required in the 'then' and 'else' cases from the base class
+            for (final prop in subClassRequired) {
+              baseClassJsonData['properties'].remove(prop);
+              baseClassJsonData['required'].remove(prop);
             }
 
-            if (jsonData.containsKey('else')) {
-              // Get the required properties from the 'else' case
-              final elseRequired =
-                  (jsonData['else']['required'] as List?) ?? [];
-              // Remove the properties that are required in the 'else' case
-              if (elseRequired is List<String>) {
-                for (final prop in baseClassJsonData['properties'].keys) {
-                  if (elseRequired.contains(prop)) {
-                    // Move the property to the 'else' class
-                    elseClassJsonData['properties'][prop] =
-                        baseClassJsonData['properties'][prop];
-                    // Add the property to the 'else' class required list
-                    // elseClassJsonData['required'] ??= [];
-                    elseClassJsonData['required'].add(prop);
-                    // Remove the property from the base class
-                    baseClassJsonData['properties'].remove(prop);
-                  }
-                }
-              }
+            // Remove the properties from the thenClass that are required in the 'else' case
+            for (final prop in elseRequired) {
+              thenClassJsonData['properties'].remove(prop);
+              thenClassJsonData['required'].remove(prop);
             }
+
+            // Remove the properties from the elseClass that are required in the 'then' case
+            for (final prop in thenRequired) {
+              elseClassJsonData['properties'].remove(prop);
+              elseClassJsonData['required'].remove(prop);
+            }
+
+            // Remove the properties that are required in the 'then' case
+            // if (thenRequired is List<String>) {
+            //   for (final prop in baseClassJsonData['properties'].keys) {
+            //     if (thenRequired.contains(prop)) {
+            //       // Move the property to the 'then' class
+            //       thenClassJsonData['properties'][prop] =
+            //           baseClassJsonData['properties'][prop];
+            //       // Add the property to the 'then' class required list
+            //       // thenClassJsonData['required'] ??= [];
+            //       thenClassJsonData['required'].add(prop);
+            //       // Remove the property from the base class
+            //       baseClassJsonData['properties'].remove(prop);
+            //     }
+            //   }
+            // }
+
+            // // Get the required properties from the 'else' case
+            // final elseRequired = (jsonData['else']['required'] as List?) ?? [];
+            // // Remove the properties that are required in the 'else' case
+            // if (elseRequired is List<String>) {
+            //   for (final prop in baseClassJsonData['properties'].keys) {
+            //     if (elseRequired.contains(prop)) {
+            //       // Move the property to the 'else' class
+            //       elseClassJsonData['properties'][prop] =
+            //           baseClassJsonData['properties'][prop];
+            //       // Add the property to the 'else' class required list
+            //       // elseClassJsonData['required'] ??= [];
+            //       elseClassJsonData['required'].add(prop);
+            //       // Remove the property from the base class
+            //       baseClassJsonData['properties'].remove(prop);
+            //     }
+            //   }
+            // }
 
             // need a new helper function to parse the model as an abstract class with polymorphic children
             // TODO: Create a new method to handle polymorphic models
