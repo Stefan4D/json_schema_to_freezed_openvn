@@ -285,7 +285,7 @@ class JsonSchemaToFreezed {
             final variantFields = variant.fields;
 
             buffer.writeln(
-              "  const factory ${model.name}${variantName != null ? '.$variantName' : ''}({",
+              "  const factory ${model.name}${variantName != null ? '.${ReCase(variantName).camelCase}' : ''}({",
             );
             for (final field in variantFields) {
               //   final dartType = _mapTypeToDart(field.type);
@@ -303,7 +303,8 @@ class JsonSchemaToFreezed {
                 "    $requiredMark$dartType$nullableMark ${field.name},",
               );
             }
-            buffer.writeln("  }) = _${model.name}.$variantName;");
+            buffer.writeln("  }) = _$variantName;");
+            buffer.writeln();
           }
         }
       } else {

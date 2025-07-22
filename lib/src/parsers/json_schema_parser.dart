@@ -149,18 +149,38 @@ class JsonSchemaParser {
             Model thenModel = _parseModel(thenClassName, thenClassJsonData);
             Model elseModel = _parseModel(elseClassName, elseClassJsonData);
 
+            List<Field> thenFields = baseModel.fields;
+            List<Field> elseFields = baseModel.fields;
+
+            for (final field in thenModel.fields) {
+              if (thenFields.any((f) => f.name == field.name)) {
+                // If the field already exists, skip it
+                continue;
+              }
+              thenFields.add(field);
+            }
+
+            for (final field in elseModel.fields) {
+              if (elseFields.any((f) => f.name == field.name)) {
+                // If the field already exists, skip it
+                continue;
+              }
+              elseFields.add(field);
+            }
+
             unionVariants.add(
               UnionVariant(
                 variantName: thenClassName,
                 unionValue: switchKeyValueForThen,
-                fields: baseModel.fields + thenModel.fields,
+                fields: thenFields,
+                isDefaultVariant: true, // Mark the 'then' class as default
               ),
             );
             unionVariants.add(
               UnionVariant(
                 variantName: elseClassName,
                 unionValue: !switchKeyValueForThen,
-                fields: baseModel.fields + elseModel.fields,
+                fields: elseFields,
               ),
             );
 
