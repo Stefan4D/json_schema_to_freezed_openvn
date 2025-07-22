@@ -361,7 +361,7 @@ class JsonSchemaToFreezed {
           buffer.writeln("  @override");
         }
         buffer.writeln(
-          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this as _\$${model.name});",
+          "  Map<String, dynamic> toJson() => _\$${model.name}ToJson(this as _${model.name});",
         );
       }
 
