@@ -149,8 +149,13 @@ class JsonSchemaParser {
             Model thenModel = _parseModel(thenClassName, thenClassJsonData);
             Model elseModel = _parseModel(elseClassName, elseClassJsonData);
 
-            List<Field> thenFields = baseModel.fields;
-            List<Field> elseFields = baseModel.fields;
+            List<Field> thenFields = [];
+            List<Field> elseFields = [];
+
+            for (final field in baseModel.fields) {
+              thenFields.add(field);
+              elseFields.add(field);
+            }
 
             for (final field in thenModel.fields) {
               if (thenFields.any((f) => f.name == field.name)) {

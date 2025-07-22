@@ -256,7 +256,7 @@ class JsonSchemaToFreezed {
   void _generateModelClass(StringBuffer buffer, Model model) {
     if (freezed) {
       if (model.unionKey != null) {
-        buffer.writeln("@freezed(unionKey: '${model.unionKey}')");
+        buffer.writeln("@Freezed(unionKey: '${model.unionKey}')");
       } else {
         buffer.writeln("@freezed");
       }
@@ -285,7 +285,7 @@ class JsonSchemaToFreezed {
             final variantFields = variant.fields;
 
             if (variant.isDefaultVariant) {
-              buffer.writeln('@FreezedUnionValue(\'${variant.unionValue}\')');
+              buffer.writeln('  @FreezedUnionValue(\'${variant.unionValue}\')');
             }
 
             buffer.writeln(
