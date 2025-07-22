@@ -85,7 +85,7 @@ class JsonSchemaParser {
             // TODO: Create a new method to handle polymorphic models
             // Base class
             Model baseModel = _parseModel(jsonData['title'], baseClassJsonData);
-            baseModel.isAbstract = true; // Mark the base class as abstract
+            // baseModel.isAbstract = true; // Mark the base class as abstract
             models.add(baseModel);
 
             // Then class

@@ -257,12 +257,12 @@ class JsonSchemaToFreezed {
     if (freezed) {
       buffer.writeln("@freezed");
       // Check if the model is a child of another class
-      final abstractClass = model.isAbstract ? "abstract " : "";
+      // final abstractClass = model.isAbstract ? "abstract " : "";
 
       final parentClass =
           model.parentClass != null ? "extends ${model.parentClass} " : "";
       buffer.writeln(
-        "${abstractClass}class ${model.name} ${parentClass}with _\$${model.name} {",
+        "abstract class ${model.name} ${parentClass}with _\$${model.name} {",
       );
       buffer.writeln("  const factory ${model.name}({");
 
