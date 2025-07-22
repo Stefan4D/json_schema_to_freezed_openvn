@@ -256,8 +256,16 @@ class JsonSchemaToFreezed {
   void _generateModelClass(StringBuffer buffer, Model model) {
     if (freezed) {
       buffer.writeln("@freezed");
-      buffer.writeln("class ${model.name} with _\$${model.name} {");
+      // Check if the model is a child of another class
+      final parentClass =
+          model.parentClass != null ? " extends ${model.parentClass} " : "";
+      buffer.writeln("class ${model.name} ${parentClass}_\$${model.name} {");
       buffer.writeln("  const factory ${model.name}({");
+
+      // If the model has a parent class, remove the parentClass field from fields to avoid adding to the generated class
+      if (model.parentClass != null) {
+        model.fields.removeWhere((field) => field.name == 'parentClass');
+      }
 
       for (final field in model.fields) {
         final dartType = _mapTypeToDart(field.type);

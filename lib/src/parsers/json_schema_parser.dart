@@ -84,12 +84,18 @@ class JsonSchemaParser {
             // need a new helper function to parse the model as an abstract class with polymorphic children
             // TODO: Create a new method to handle polymorphic models
             models.add(_parseModel(jsonData['title'], baseClassJsonData));
-            models.add(
-              _parseModel(thenPrefix + jsonData['title'], thenClassJsonData),
+            Model thenModel = _parseModel(
+              thenPrefix + jsonData['title'],
+              thenClassJsonData,
             );
-            models.add(
-              _parseModel("Default ${jsonData['title']}", elseClassJsonData),
+            thenModel.parentClass = jsonData['title'];
+            models.add(thenModel);
+            Model elseModel = _parseModel(
+              "Default ${jsonData['title']}",
+              elseClassJsonData,
             );
+            elseModel.parentClass = jsonData['title'];
+            models.add(elseModel);
           }
 
           // Then class

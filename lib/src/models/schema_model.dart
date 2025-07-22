@@ -4,25 +4,23 @@ class Schema {
   final String? version;
   final Map<String, dynamic>? metadata;
 
-  Schema({
-    required this.models,
-    this.version,
-    this.metadata,
-  });
+  Schema({required this.models, this.version, this.metadata});
 }
 
 /// Represents a model or entity in the schema
 class Model {
-  String name;  // Changed from final to allow modification
+  String name; // Changed from final to allow modification
   final List<Field> fields;
   final String? description;
   final bool isEnum;
+  String? parentClass; // Optional parent class for inheritance
 
   Model({
     required this.name,
     required this.fields,
     this.description,
     this.isEnum = false,
+    this.parentClass,
   });
 }
 
@@ -51,13 +49,9 @@ class Field {
 class FieldType {
   final TypeKind kind;
   final FieldType? itemType; // For arrays
-  final String? reference;   // For references to other models
+  final String? reference; // For references to other models
 
-  FieldType({
-    required this.kind,
-    this.itemType,
-    this.reference,
-  });
+  FieldType({required this.kind, this.itemType, this.reference});
 }
 
 /// Enumeration of possible field types
