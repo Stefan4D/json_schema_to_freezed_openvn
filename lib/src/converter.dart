@@ -260,7 +260,7 @@ class JsonSchemaToFreezed {
       final abstractClass = model.isAbstract ? "abstract " : "";
 
       final parentClass =
-          model.parentClass != null ? "extends ${model.parentClass} " : "";
+          model.parentClass != null ? "implements ${model.parentClass} " : "";
       buffer.writeln(
         "${abstractClass}class ${model.name} ${parentClass}with _\$${model.name} {",
       );
