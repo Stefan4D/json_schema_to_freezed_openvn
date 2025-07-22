@@ -94,14 +94,16 @@ class JsonSchemaParser {
               thenClassJsonData,
             );
             thenModel.parentClass = jsonData['title'];
+            thenModel.isAbstract = false; // Mark the 'then' class as concrete
             models.add(thenModel);
 
             // Else class
             Model elseModel = _parseModel(
-              "Default ${jsonData['title']}",
+              "Default${jsonData['title']}",
               elseClassJsonData,
             );
             elseModel.parentClass = jsonData['title'];
+            elseModel.isAbstract = false; // Mark the 'else' class as concrete
             models.add(elseModel);
           }
 

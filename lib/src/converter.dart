@@ -257,12 +257,12 @@ class JsonSchemaToFreezed {
     if (freezed) {
       buffer.writeln("@freezed");
       // Check if the model is a child of another class
-      // final abstractClass = model.isAbstract ? "abstract " : "";
+      final abstractClass = model.isAbstract ? "abstract " : "";
 
       final parentClass =
           model.parentClass != null ? "extends ${model.parentClass} " : "";
       buffer.writeln(
-        "abstract class ${model.name} ${parentClass}with _\$${model.name} {",
+        "${abstractClass}class ${model.name} ${parentClass}with _\$${model.name} {",
       );
       buffer.writeln("  const factory ${model.name}({");
 
@@ -270,6 +270,9 @@ class JsonSchemaToFreezed {
       if (model.parentClass != null) {
         model.fields.removeWhere((field) => field.name == 'parentClass');
       }
+
+      // Remove the isAbstract field
+      model.fields.removeWhere((field) => field.name == 'isAbstract');
 
       for (final field in model.fields) {
         final dartType = _mapTypeToDart(field.type);
